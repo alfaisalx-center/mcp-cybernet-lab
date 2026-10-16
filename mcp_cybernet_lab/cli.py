@@ -1,11 +1,11 @@
-"""mcpnet command line.
+"""MCP CyberNet Lab command line (`mcl`, or `mcp-cybernet-lab`).
 
-    mcpnet validate testbeds/toy.yaml        check the file; no Docker needed
-    mcpnet build    testbeds/toy.yaml        write build/<testbed>/ (compose, Dockerfiles, data, canaries)
-    mcpnet up       testbeds/toy.yaml        build images and start the containers
-    mcpnet smoke    testbeds/toy.yaml        from every client, initialize every server and list its tools
-    mcpnet reset    testbeds/toy.yaml        restore every server's data to the planted state
-    mcpnet down     testbeds/toy.yaml        stop and remove the containers and networks
+    mcl validate testbeds/toy.yaml        check the file; no Docker needed
+    mcl build    testbeds/toy.yaml        write build/<testbed>/ (compose, Dockerfiles, data, canaries)
+    mcl up       testbeds/toy.yaml        build images and start the containers
+    mcl smoke    testbeds/toy.yaml        from every client, initialize every server and list its tools
+    mcl reset    testbeds/toy.yaml        restore every server's data to the planted state
+    mcl down     testbeds/toy.yaml        stop and remove the containers and networks
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def compose(out: Path, *cmd: str, capture: bool = False) -> subprocess.Completed
 
 def need_build(out: Path) -> None:
     if not (out / "docker-compose.yml").exists():
-        raise TestbedError(f"{out} is not built; run `mcpnet build` first")
+        raise TestbedError(f"{out} is not built; run `mcl build` first")
 
 
 def cmd_validate(args) -> int:
@@ -57,7 +57,7 @@ def cmd_build(args) -> int:
         print(f"warning: {w}")
     out = build(loaded, build_dir(args, loaded.testbed.testbed))
     manifest = json.loads((out / "manifest.json").read_text())
-    print(f"built {out} ({manifest['canaries']} canaries, commit {manifest['mcpnet_commit']})")
+    print(f"built {out} ({manifest['canaries']} canaries, commit {manifest['commit']})")
     return 0
 
 
@@ -79,7 +79,7 @@ def cmd_smoke(args) -> int:
             s = tb.server(sid)
             target = ["stdio", f"mcp-{s.id}", *s.args] if s.transport == "stdio" else \
                      ["http", f"http://{s.id}:8080/mcp"]
-            r = compose(out, "exec", "-T", c.id, "python3", "/opt/mcpnet/probe.py", *target, capture=True)
+            r = compose(out, "exec", "-T", c.id, "python3", "/opt/mcl/probe.py", *target, capture=True)
             line = (r.stdout.strip().splitlines() or ['{"ok": false, "error": "no output"}'])[-1]
             try:
                 res = json.loads(line)
@@ -134,8 +134,8 @@ def cmd_down(args) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(prog="mcpnet", description="Containerised MCP network testbeds from one YAML file.")
-    p.add_argument("--version", action="version", version=f"mcpnet {__version__}")
+    p = argparse.ArgumentParser(prog="mcl", description="Containerised MCP network testbeds from one YAML file.")
+    p.add_argument("--version", action="version", version=f"mcp-cybernet-lab {__version__}")
     p.add_argument("--out", default="build", help="folder for build outputs (default: build)")
     sub = p.add_subparsers(dest="command", required=True)
     for name, fn in [("validate", cmd_validate), ("build", cmd_build), ("up", cmd_up),

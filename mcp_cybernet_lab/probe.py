@@ -26,7 +26,7 @@ TIMEOUT_S = 60
 INIT = {
     "jsonrpc": "2.0", "id": 1, "method": "initialize",
     "params": {"protocolVersion": PROTOCOL, "capabilities": {},
-               "clientInfo": {"name": "mcpnet-probe", "version": "0.1"}},
+               "clientInfo": {"name": "mcl-probe", "version": "0.1"}},
 }
 INITIALIZED = {"jsonrpc": "2.0", "method": "notifications/initialized"}
 LIST_TOOLS = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}

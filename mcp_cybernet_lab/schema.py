@@ -156,7 +156,7 @@ class Testbed(Strict):
     @classmethod
     def _version(cls, v: int) -> int:
         if v != SCHEMA_VERSION:
-            raise ValueError(f"schema version {v} not supported (this mcpnet reads version {SCHEMA_VERSION})")
+            raise ValueError(f"schema version {v} not supported (this mcp-cybernet-lab reads version {SCHEMA_VERSION})")
         return v
 
     @model_validator(mode="after")

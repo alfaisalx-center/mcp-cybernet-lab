@@ -1,10 +1,10 @@
-# mcpnet
+# MCP CyberNet Lab
 
 **Containerised MCP network testbeds, generated from one YAML file.**
 AlfaisalX, Center of Excellence for Cognitive Robotics and Autonomous Agents, Alfaisal University.
 
 Published MCP security testbeds run every server as a local process on one machine. They have no
-network, no separate organisations and no authentication. mcpnet builds a realistic MCP network
+network, no separate organisations and no authentication. mcp-cybernet-lab builds a realistic MCP network
 instead:
 
 - each server runs in its own Docker container;
@@ -26,15 +26,15 @@ Requirements: Python ≥ 3.10 and Docker with Compose v2.
 
 ```bash
 pip install -e ".[dev]"
-mcpnet validate testbeds/toy-network.yaml   # check the file (no Docker)
-mcpnet build    testbeds/toy-network.yaml   # write build/toy-network/
-mcpnet up --wait testbeds/toy-network.yaml  # build images, start containers
-mcpnet smoke    testbeds/toy-network.yaml   # every client initializes every server and lists its tools
-mcpnet reset    testbeds/toy-network.yaml   # restore planted data between tasks
-mcpnet down     testbeds/toy-network.yaml
+mcl validate testbeds/toy-network.yaml   # check the file (no Docker)
+mcl build    testbeds/toy-network.yaml   # write build/toy-network/
+mcl up --wait testbeds/toy-network.yaml  # build images, start containers
+mcl smoke    testbeds/toy-network.yaml   # every client initializes every server and lists its tools
+mcl reset    testbeds/toy-network.yaml   # restore planted data between tasks
+mcl down     testbeds/toy-network.yaml
 ```
 
-`mcpnet smoke` should show:
+`mcl smoke` should show:
 
 ```
 ok   agent -> fs: secure-filesystem-server 1.0.0 — http, 14 tools, ...
@@ -82,7 +82,7 @@ canaries:
   per_server: 6               # format-authentic secrets: sk_live_*, AKIA*, ghp_*, SA IBAN, ...
 ```
 
-Every field is defined in [`mcpnet/schema.py`](mcpnet/schema.py). Unknown fields are errors, not
+Every field is defined in [`mcp_cybernet_lab/schema.py`](mcp_cybernet_lab/schema.py). Unknown fields are errors, not
 ignored. `with_packages` pins dependencies of servers that break with current libraries (see the
 sqlite server in `testbeds/mcphunt-*.yaml`).
 
@@ -94,10 +94,10 @@ build/<testbed>/
   dockerfiles/           one per container
   context/               runtime files copied into the images
   data/<server>/         each server's data, with canaries planted in credentials.env
-  data.pristine/         copy restored by `mcpnet reset`
+  data.pristine/         copy restored by `mcl reset`
   canaries.json          ground truth: every canary, its server, kind and value
-  manifest.json          source file hash, seed, mcpnet commit, versions requested and installed
-  smoke.json             written by `mcpnet smoke`
+  manifest.json          source file hash, seed, mcp-cybernet-lab commit, versions requested and installed
+  smoke.json             written by `mcl smoke`
 ```
 
 ## How a server becomes a container

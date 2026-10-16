@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mcpnet.compose import build
-from mcpnet.loader import TestbedError, check_buildable, load_testbed
-from mcpnet.seeding import make_canaries
+from mcp_cybernet_lab.compose import build
+from mcp_cybernet_lab.loader import TestbedError, check_buildable, load_testbed
+from mcp_cybernet_lab.seeding import make_canaries
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTBEDS = sorted((ROOT / "testbeds").glob("*.yaml"))
@@ -99,7 +99,7 @@ def test_compose_topology(tmp_path):
     assert c["networks"]["net-corp"]["internal"] is True
     assert c["networks"]["net-public"]["internal"] is False
     assert s["b"]["cap_add"] == ["NET_ADMIN"] and "cap_add" not in s["a"]
-    assert s["b"]["environment"]["MCPNET_LOSS_PCT"] == "2"
+    assert s["b"]["environment"]["MCL_LOSS_PCT"] == "2"
     assert "./data/c:/data/c" in s["agent"]["volumes"]
     assert "install_server.py python pkg-c 1 c" in (out / "dockerfiles/agent.Dockerfile").read_text()
     assert (out / "data/a/credentials.env").read_text().count("=") == 5

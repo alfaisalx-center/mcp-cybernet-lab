@@ -1,5 +1,5 @@
 # Two servers in two trust domains, each in its own container, reached over the network.
-# The smallest networked testbed: use it to check an installation (mcpnet smoke).
+# The smallest networked testbed: use it to check an installation (mcl smoke).
 testbed: toy-network
 version: 1
 seed: 0

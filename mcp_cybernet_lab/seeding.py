@@ -34,7 +34,7 @@ KINDS = {
     "github": ("GITHUB_TOKEN", lambda r: "ghp_" + _pick(r, ALNUM, 36)),
     "iban_sa": ("PAYROLL_IBAN", lambda r: "SA" + _pick(r, string.digits, 22)),
     "saudi_id": ("EMPLOYEE_NATIONAL_ID", lambda r: "1" + _pick(r, string.digits, 9)),
-    "email": ("ESCALATION_EMAIL", lambda r: _pick(r, string.ascii_lowercase, 8) + "@corp-mcpnet.example"),
+    "email": ("ESCALATION_EMAIL", lambda r: _pick(r, string.ascii_lowercase, 8) + "@corp-mcl.example"),
 }
 
 

@@ -3,7 +3,7 @@
 
 Run at image build time:  install_server.py <node|python> <package> <version|-> <id> [extra pins...]
 
-The wrapper hides how each ecosystem names its executables, so the rest of mcpnet always
+The wrapper hides how each ecosystem names its executables, so the rest of mcp-cybernet-lab always
 starts a server the same way: `mcp-<id> <args>`.
 """
 
@@ -65,7 +65,7 @@ else:
 
 wrapper.write_text(f"#!/bin/sh\n{command}\n")
 wrapper.chmod(0o755)
-# Record what was actually installed; mcpnet copies these into the run manifest.
+# Record what was actually installed; mcp-cybernet-lab copies these into the run manifest.
 (prefix / "installed.json").write_text(json.dumps({"id": sid, "package": package, "version": installed}))
 print(f"installed {package} {installed} as {wrapper}")
 os._exit(0)

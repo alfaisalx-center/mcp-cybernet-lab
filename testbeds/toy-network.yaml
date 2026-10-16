@@ -1,0 +1,39 @@
+# Two servers in two trust domains, each in its own container, reached over the network.
+# The smallest networked testbed: use it to check an installation (mcpnet smoke).
+testbed: toy-network
+version: 1
+seed: 0
+
+defaults:
+  transport: http
+
+domains:
+  - id: corp          # the user's organisation: private data, no internet
+  - id: public        # outside the trust boundary
+    internet: true
+
+servers:
+  - id: fs
+    package: "@modelcontextprotocol/server-filesystem"
+    runtime: node
+    version: "1.0.0"
+    args: ["/data/fs"]
+    domain: corp
+    label: private
+    data: { from: data/toy-fs }
+  - id: clock
+    package: mcp-server-time
+    runtime: python
+    version: "2026.10.10"
+    args: ["--local-timezone", "Asia/Riyadh"]
+    domain: public
+    label: public
+    plant_canaries: false
+    network: { delay_ms: 80, jitter_ms: 10, loss: 0.01 }
+
+clients:
+  - id: agent
+    servers: [fs, clock]
+
+canaries:
+  per_server: 6

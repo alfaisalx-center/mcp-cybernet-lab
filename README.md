@@ -34,6 +34,14 @@ mcl reset    testbeds/toy-network.yaml   # restore planted data between tasks
 mcl down     testbeds/toy-network.yaml
 ```
 
+`pip install -e .` creates the `mcl` command (also available as `mcp-cybernet-lab`) from
+`[project.scripts]` in `pyproject.toml`. Without installing, run the same commands with Python
+from the repository folder, once `pyyaml` and `pydantic` are installed:
+
+```bash
+python -m mcp_cybernet_lab smoke testbeds/toy-network.yaml
+```
+
 `mcl smoke` should show:
 
 ```

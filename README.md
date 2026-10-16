@@ -126,6 +126,12 @@ over stdio. The server code is identical in both cases; only the transport chang
 
 The two files of each pair differ only in their topology lines, and they plant the same canaries.
 
+## Adding servers
+
+[`docs/2026-10-17-0032-mcp-server-catalogue.md`](docs/2026-10-17-0032-mcp-server-catalogue.md)
+lists the public MCP servers that work today, the public servers that can be added, and the custom
+servers planned in this repository (private data sources, sinks, translators, attacker servers).
+
 ## Tests
 
 ```bash

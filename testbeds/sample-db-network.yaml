@@ -1,0 +1,33 @@
+# A custom MCP server from this repository (servers/sample-db): the Najd Logistics company
+# database, read-only, next to a public web-fetch server. Example for
+# docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md.
+testbed: sample-db-network
+version: 1
+seed: 0
+
+defaults:
+  transport: http
+
+domains:
+  - id: corp
+  - id: public
+    internet: true
+
+servers:
+  - id: hr
+    runtime: local
+    path: ../servers/sample-db          # relative to this file
+    args: ["--db", "/data/hr/company.db"]
+    domain: corp
+    label: private
+  - id: fetch
+    runtime: python
+    package: mcp-server-fetch
+    version: "2026.10.10"
+    domain: public
+    label: public
+    plant_canaries: false
+
+clients:
+  - id: agent
+    servers: [hr, fetch]

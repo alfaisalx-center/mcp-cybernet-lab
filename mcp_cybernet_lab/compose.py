@@ -12,6 +12,7 @@ build/<testbed>/
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -54,7 +55,12 @@ def dockerfile(installs: list[Server], cmd: list[str]) -> str:
         "RUN chmod +x /opt/mcl/*.sh /opt/mcl/*.py",
     ]
     for s in installs:
-        lines.append(f"RUN python3 /opt/mcl/install_server.py {s.runtime} {s.package} {s.version or '-'} {s.id}"
+        if s.runtime == "local":  # custom server: its source is copied into the build context
+            lines.append(f"COPY servers/{s.id} /opt/mcp-src/{s.id}")
+            source = f"/opt/mcp-src/{s.id}"
+        else:
+            source = s.package
+        lines.append(f"RUN python3 /opt/mcl/install_server.py {s.runtime} {source} {s.version or '-'} {s.id}"
                      + "".join(f" '{w}'" for w in s.with_packages))
     lines.append('ENTRYPOINT ["/opt/mcl/entrypoint.sh"]')
     lines.append(f"CMD {json.dumps(cmd)}")
@@ -134,6 +140,14 @@ def client_service(tb: Testbed, c: Client) -> dict:
     return svc
 
 
+def tree_sha256(root: Path) -> str:
+    """Hash of every file under a folder (names and contents), to identify a custom server's code."""
+    h = hashlib.sha256()
+    for f in sorted(p for p in root.rglob("*") if p.is_file()):
+        h.update(str(f.relative_to(root)).encode() + b"\0" + f.read_bytes())
+    return h.hexdigest()
+
+
 def _git_commit() -> str:
     try:
         out = subprocess.run(["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"],
@@ -154,6 +168,10 @@ def build(loaded: Loaded, out: Path) -> Path:
     (out / "dockerfiles").mkdir(parents=True)
     shutil.copytree(RUNTIME, out / "context")
     shutil.copy(Path(__file__).parent / "probe.py", out / "context" / "probe.py")
+    for s in tb.servers:
+        if s.runtime == "local":
+            shutil.copytree(loaded.path.parent / s.path, out / "context" / "servers" / s.id,
+                            ignore=shutil.ignore_patterns("__pycache__", "*.egg-info", "build", "*.db"))
 
     # Data and canaries.
     canaries = make_canaries(tb)
@@ -203,7 +221,9 @@ def build(loaded: Loaded, out: Path) -> Path:
         "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "base_images": [BASE_IMAGE, UV_IMAGE],
         "mcp_proxy": MCP_PROXY,
-        "servers": [{"id": s.id, "package": s.package, "runtime": s.runtime,
+        "servers": [{"id": s.id, "package": s.package, "path": s.path,
+                     "source_sha256": tree_sha256(out / "context" / "servers" / s.id) if s.path else None,
+                     "runtime": s.runtime,
                      "requested_version": s.version, "transport": s.transport,
                      "domain": s.domain, "label": s.label} for s in tb.servers],
         "canaries": len(canaries),

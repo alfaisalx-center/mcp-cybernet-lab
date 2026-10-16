@@ -67,8 +67,9 @@ class ServerData(Strict):
 
 class Server(Strict):
     id: str
-    package: str  # npm or PyPI package name
-    runtime: Literal["node", "python"]
+    runtime: Literal["node", "python", "local"]
+    package: str | None = None  # npm or PyPI package name (runtime node or python)
+    path: str | None = None  # folder of a custom Python server, relative to the YAML (runtime local)
     version: str | None = None  # pin for reproducibility; None = latest at build time
     with_packages: list[str] = []  # extra pins installed with the server, e.g. "mcp==1.6.0"
     args: list[str] = []
@@ -81,6 +82,15 @@ class Server(Strict):
     plant_canaries: bool = True  # write canaries into the server's data folder
 
     _id = field_validator("id")(_check_id)
+
+    @model_validator(mode="after")
+    def _source(self) -> "Server":
+        if self.runtime == "local":
+            if not self.path or self.package or self.version:
+                raise ValueError(f"server '{self.id}': runtime local takes 'path' (no package, no version)")
+        elif not self.package or self.path:
+            raise ValueError(f"server '{self.id}': runtime {self.runtime} takes 'package' (no path)")
+        return self
 
     @property
     def mount(self) -> str:

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Install one MCP server package into its own folder and expose it as /usr/local/bin/mcp-<id>.
 
-Run at image build time:  install_server.py <node|python> <package> <version|-> <id> [extra pins...]
+Run at image build time:  install_server.py <node|python|local> <package|folder> <version|-> <id> [extra pins...]
+
+runtime local: <folder> holds a custom Python server with a pyproject.toml (see servers/).
 
 The wrapper hides how each ecosystem names its executables, so the rest of mcp-cybernet-lab always
 starts a server the same way: `mcp-<id> <args>`.
@@ -41,8 +43,13 @@ if runtime == "node":
     command = f'exec node "{entry}" "$@"'
     installed = meta.get("version", "?")
 
-elif runtime == "python":
-    spec = f"{package}=={version}" if version else package
+elif runtime in ("python", "local"):
+    if runtime == "local":
+        import tomllib
+        spec = package  # the folder: uv installs it like any package
+        package = tomllib.loads((Path(spec) / "pyproject.toml").read_text())["project"]["name"]
+    else:
+        spec = f"{package}=={version}" if version else package
     run("uv", "venv", "--quiet", str(prefix / "venv"))
     py = str(prefix / "venv" / "bin" / "python")
     run("uv", "pip", "install", "--quiet", "--python", py, spec, *extra)

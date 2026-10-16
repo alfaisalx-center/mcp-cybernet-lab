@@ -27,9 +27,9 @@ Every package name and version below was checked on npm or PyPI on 16–17 Octob
 | npm package | Yes | `runtime: node`, `package: "<name>"` |
 | PyPI package | Yes | `runtime: python`, `package: <name>` |
 | Docker image (Go servers, e.g. Gitea, GitHub) | **Not yet** | planned: `runtime: image`, `image: <ref>` |
-| Custom server in this repo (`servers/<name>/`) | **Not yet** | planned: `runtime: local`, `path: servers/<name>` |
+| Custom server in this repo (`servers/<name>/`) | Yes (17 Oct) | `runtime: local`, `path: ../servers/<name>`; see the guide `2026-10-17-0050-guide-create-a-custom-mcp-server.md` |
 
-The two "not yet" rows are small changes to `schema.py` and `compose.py`. They are needed before
+The "not yet" row is a small change to `schema.py` and `compose.py`. They are needed before
 any server of group C or any Go server is added.
 
 ---
@@ -146,7 +146,7 @@ public server offers.
 
 ### Suggested build order
 
-1. `runtime: local` support in the schema, plus one minimal custom server as the template.
+1. ~~`runtime: local` support, plus one custom server as the template~~ done: `servers/sample-db`.
 2. `public-paste` and `webhook-sink`: observable sinks are needed for every leak measurement.
 3. `hr-payroll` and `crm` (with Arabic records): realistic private sources.
 4. `team-chat`, `ticketing`: realistic multi-party channels.

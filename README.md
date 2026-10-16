@@ -132,6 +132,10 @@ The two files of each pair differ only in their topology lines, and they plant t
 lists the public MCP servers that work today, the public servers that can be added, and the custom
 servers planned in this repository (private data sources, sinks, translators, attacker servers).
 
+Write your own server: [`docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md`](docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md)
+walks through `servers/sample-db/` (a read-only company database with synthetic English and Arabic
+records) and `runtime: local`.
+
 ## Tests
 
 ```bash

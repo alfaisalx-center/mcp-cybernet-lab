@@ -49,7 +49,11 @@ def load_testbed(path: str | Path) -> Loaded:
 
     warnings = []
     for s in tb.servers:
-        if s.version is None:
+        if s.runtime == "local":
+            src = path.parent / s.path
+            if not (src / "pyproject.toml").is_file():
+                raise TestbedError(f"server '{s.id}': '{s.path}' must be a folder with a pyproject.toml")
+        elif s.version is None:
             warnings.append(f"server '{s.id}': no version pinned; the build is not reproducible")
         if s.data and s.data.source and not (path.parent / s.data.source).is_dir():
             raise TestbedError(f"server '{s.id}': data folder '{s.data.source}' not found next to {path.name}")

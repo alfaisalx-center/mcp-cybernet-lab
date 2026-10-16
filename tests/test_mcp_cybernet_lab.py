@@ -113,3 +113,34 @@ def test_unimplemented_features_are_refused(tmp_path):
     with pytest.raises(TestbedError, match="M4") as e:
         build(loaded, tmp_path / "out")
     assert "M3" in str(e.value)
+
+
+def test_local_server_is_copied_and_installed(tmp_path):
+    out = build(load_testbed(ROOT / "testbeds/sample-db-network.yaml"), tmp_path / "out")
+    assert (out / "context/servers/hr/pyproject.toml").exists()
+    assert not list((out / "context/servers/hr").rglob("__pycache__"))
+    df = (out / "dockerfiles/hr.Dockerfile").read_text()
+    assert "COPY servers/hr /opt/mcp-src/hr" in df and "install_server.py local /opt/mcp-src/hr" in df
+    import json
+    hr = next(s for s in json.loads((out / "manifest.json").read_text())["servers"] if s["id"] == "hr")
+    assert len(hr["source_sha256"]) == 64
+
+
+@pytest.mark.parametrize("server, message", [
+    ({"id": "x", "runtime": "local"}, "takes 'path'"),
+    ({"id": "x", "runtime": "local", "path": "p", "package": "q"}, "takes 'path'"),
+    ({"id": "x", "runtime": "python"}, "takes 'package'"),
+    ({"id": "x", "runtime": "python", "package": "q", "path": "p"}, "takes 'package'"),
+])
+def test_server_source_rules(tmp_path, server, message):
+    data = {"testbed": "t", "servers": [server], "clients": [{"id": "a", "servers": ["x"]}]}
+    with pytest.raises(TestbedError, match=message):
+        load_testbed(write(tmp_path, data))
+
+
+def test_local_server_needs_pyproject(tmp_path):
+    (tmp_path / "srv").mkdir()
+    data = {"testbed": "t", "servers": [{"id": "x", "runtime": "local", "path": "srv"}],
+            "clients": [{"id": "a", "servers": ["x"]}]}
+    with pytest.raises(TestbedError, match="pyproject"):
+        load_testbed(write(tmp_path, data))

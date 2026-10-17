@@ -22,12 +22,6 @@ instead:
 The same YAML can also describe the **local** setup used in the literature, so results on the two
 topologies can be compared directly.
 
-![Command-line demo: validate, build, up, smoke, down](docs/media/cli-demo.gif)
-
-*The whole command-line lifecycle on the `toy-network` testbed. A full narrated walkthrough (CLI and
-web interface) is scripted in [`docs/2026-10-17-0956-screencast-script-getting-started.md`](docs/2026-10-17-0956-screencast-script-getting-started.md);
-this clip is regenerated from [`docs/media/cli-demo.tape`](docs/media/cli-demo.tape) with [vhs](https://github.com/charmbracelet/vhs).*
-
 ## Educational and authorised use only
 
 This project includes a small **ethical-hacking lab** that demonstrates attacks on MCP servers and

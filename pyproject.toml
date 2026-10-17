@@ -19,3 +19,7 @@ mcl = "mcp_cybernet_lab.cli:main"
 
 [tool.setuptools]
 packages = ["mcp_cybernet_lab"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+mcp_cybernet_lab = ["webdist/*", "webdist/**/*"]

@@ -115,3 +115,19 @@ for i, svc in enumerate(SERVICES, 1):
 path = Path(__file__).parent / "sample_db" / "seed.sql"
 path.write_text("\n".join(out) + "\n", encoding="utf-8")
 print(f"wrote {path} ({len(out)} lines)")
+
+# Ground truth for the lab: the sensitive values in the seed, registered as canaries with
+# `extra_canaries:` in a testbed, so a leaked IBAN or API key from a row is detected.
+import json, re  # noqa: E401,E402
+secrets = []
+for line in out:
+    if line.startswith("INSERT INTO employees"):
+        vals = re.findall(r"'([^']*)'", line)
+        secrets += [{"kind": "saudi_id", "name": f"employee {vals[0]} national_id", "value": vals[5]},
+                    {"kind": "iban_sa", "name": f"employee {vals[0]} iban", "value": vals[6]}]
+    elif line.startswith("INSERT INTO api_keys"):
+        vals = re.findall(r"'([^']*)'", line)
+        secrets.append({"kind": "stripe", "name": f"api key {vals[0]}", "value": vals[1]})
+canary_path = Path(__file__).parent / "canaries.json"
+canary_path.write_text(json.dumps(secrets, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+print(f"wrote {canary_path} ({len(secrets)} values)")

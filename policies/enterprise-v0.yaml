@@ -1,0 +1,11 @@
+# Initial taint-guard policy for the enterprise testbeds (policy version 0), as a human writes it.
+# Deliberately incomplete, as real first policies are: `files` is not listed as a source, so a
+# secret read from a file is not tracked. `mcl evolve` should discover this from confirmed leaks.
+version: 0
+sources: [hr]
+sinks: [paste, web, fetch]
+patterns:
+  - { name: stripe_key, regex: "sk_live_[A-Za-z0-9]{16,}" }
+  - { name: saudi_iban, regex: "SA\\d{22}" }
+values: []
+check_patterns_at_sinks: false

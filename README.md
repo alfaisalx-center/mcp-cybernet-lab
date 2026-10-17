@@ -1,76 +1,91 @@
 # MCP CyberNet Lab
 
-**Containerised MCP network testbeds, generated from one YAML file.**
+**A containerised testbed and benchmark for Model Context Protocol (MCP) security — built from one YAML file.**
 AlfaisalX, Center of Excellence for Cognitive Robotics and Autonomous Agents, Alfaisal University.
 
-Published MCP security testbeds run every server as a local process on one machine. They have no
-network, no separate organisations and no authentication. mcp-cybernet-lab builds a realistic MCP network
+MCP CyberNet Lab lets you stand up a realistic network of MCP servers and an LLM agent on your own
+machine, run attacks against them in a contained environment, and measure what leaks. It is meant
+as a **teaching tool** and as a **baseline framework and benchmark** that other researchers can build
+their own MCP-security experiments on.
+
+Published MCP security testbeds run every server as a local process on one machine, with no network,
+no separate organisations and no authentication. MCP CyberNet Lab builds a realistic MCP network
 instead:
 
 - each server runs in its own Docker container;
-- each organisation (trust domain) has its own Docker network;
+- each organisation (trust domain) has its own Docker network, and a private network has no route to the internet;
+- per-domain authentication (bearer token) can be required;
 - network delay and packet loss can be set per server;
-- secret "canaries" are planted in the servers' data, so a leak is detected without an LLM judge.
+- an optional gateway logs every tool call and can block it with a guard;
+- secret **canaries** are planted in the servers' data, so a leak is detected deterministically, without an LLM judge.
 
-The same YAML can also describe the **local** setup used in the literature. Results on the two
-topologies can then be compared directly.
+The same YAML can also describe the **local** setup used in the literature, so results on the two
+topologies can be compared directly.
 
-> Status: **v0.1, milestones M0 and the first part of M2.** Schema, generator, local and networked
-> topologies, network conditions, canaries and smoke test work. Agent harness (M1), authentication
-> (M3), the guard gateway (M4), attacks and transforms (M7) are planned. The schema accepts them
-> already, and `build` refuses them with the milestone name.
+## Educational and authorised use only
+
+This project includes a small **ethical-hacking lab** that demonstrates attacks on MCP servers and
+agents. It exists for teaching and defensive research. Everything runs locally against **synthetic
+data** (every secret is format-authentic but fake) in containers with no route to the internet; the
+"exfiltration" endpoints are local recorders. Use it only on infrastructure you own or are
+authorised to test. It is not a tool for attacking real systems, and the demonstrations are paired
+with the defence that stops them. See [`docs/2026-10-17-0210-ethical-hacking-lab.md`](docs/2026-10-17-0210-ethical-hacking-lab.md).
 
 ## Quick start
 
-Requirements: Python ≥ 3.10 and Docker with Compose v2.
+Requirements: Python ≥ 3.10 and Docker with Compose v2. For the web UI, Node ≥ 18.
 
 ```bash
 pip install -e ".[dev]"
-mcl validate testbeds/toy-network.yaml   # check the file (no Docker)
-mcl build    testbeds/toy-network.yaml   # write build/toy-network/
-mcl up --wait testbeds/toy-network.yaml  # build images, start containers
-mcl smoke    testbeds/toy-network.yaml   # every client initializes every server and lists its tools
-mcl reset    testbeds/toy-network.yaml   # restore planted data between tasks
+
+# Option A — the web interface (configure and run testbeds in the browser)
+mcl web                                   # http://127.0.0.1:8000
+
+# Option B — the command line
+mcl validate testbeds/toy-network.yaml    # check the file (no Docker)
+mcl build    testbeds/toy-network.yaml    # write build/toy-network/
+mcl up --wait testbeds/toy-network.yaml   # build images, start containers
+mcl smoke    testbeds/toy-network.yaml    # every client initialises every server and lists its tools
 mcl down     testbeds/toy-network.yaml
 ```
 
-`pip install -e .` creates the `mcl` command (also available as `mcp-cybernet-lab`) from
-`[project.scripts]` in `pyproject.toml`. Without installing, run the same commands with Python
-from the repository folder, once `pyyaml` and `pydantic` are installed:
+`pip install -e .` creates the `mcl` command (also `mcp-cybernet-lab`). Without installing, run the
+same commands as `python -m mcp_cybernet_lab <command> …` once `pyyaml` and `pydantic` are present.
 
-```bash
-python -m mcp_cybernet_lab smoke testbeds/toy-network.yaml
-```
+## The web interface
 
-`mcl smoke` should show:
+`mcl web` serves a local page (bound to `127.0.0.1`) to:
 
-```
-ok   agent -> fs: secure-filesystem-server 1.0.0 — http, 14 tools, ...
-ok   agent -> clock: mcp-time 2026.10.10 — http, 2 tools, ...
-2/2 connections ok
-```
+- browse the testbeds in `testbeds/` and see each one validated at a glance;
+- edit or write a testbed YAML, with live validation and a summary of its servers, domains and gateway;
+- run **build / up / smoke / reset / down** and watch the output;
+- read the server catalogue.
+
+The front-end is a React app in [`web/`](web/), pre-built into the package so `mcl web` works out of
+the box. To change it: `cd web && npm install && npm run build` (writes `mcp_cybernet_lab/webdist/`),
+or `npm run dev` for hot reload against a running `mcl web`.
 
 ## The YAML file
 
 ```yaml
 testbed: toy-network
 version: 1
-seed: 0                       # all randomness (canaries, later data and noise) comes from here
+seed: 0                       # all randomness (canaries, data, noise) comes from here
 
 defaults:
-  transport: http             # stdio = local pipes (as in MCPHunt); http = own container, networked
+  transport: http             # stdio = local pipes (as in the literature); http = own container, networked
 
 domains:                      # trust domains: one Docker network each
-  - id: corp                  # internet: false (default) -> the network has no route out
+  - id: corp                  # no `internet: true` -> the network has no route out
   - id: public
     internet: true
 
 servers:
   - id: fs
     package: "@modelcontextprotocol/server-filesystem"
-    runtime: node             # node | python
-    version: "1.0.0"          # pin it: the build warns when a version is missing
-    args: ["/data/fs"]        # server data is mounted at /data/<id> by default
+    runtime: node             # node | python | local (a server from this repo's servers/)
+    version: "1.0.0"
+    args: ["/data/fs"]        # server data is mounted at /data/<id>
     domain: corp
     label: private            # private | public | mixed
     data: { from: data/toy-fs }
@@ -90,71 +105,100 @@ canaries:
   per_server: 6               # format-authentic secrets: sk_live_*, AKIA*, ghp_*, SA IBAN, ...
 ```
 
-Every field is defined in [`mcp_cybernet_lab/schema.py`](mcp_cybernet_lab/schema.py). Unknown fields are errors, not
-ignored. `with_packages` pins dependencies of servers that break with current libraries (see the
-sqlite server in `testbeds/mcphunt-*.yaml`).
+Every field is defined in [`mcp_cybernet_lab/schema.py`](mcp_cybernet_lab/schema.py). Unknown fields
+are errors, not ignored.
+
+## Setting up MCP servers
+
+- **Existing public servers** — [`docs/2026-10-17-0032-mcp-server-catalogue.md`](docs/2026-10-17-0032-mcp-server-catalogue.md)
+  lists the servers that work today and others you can add. Most speak stdio only; at image-build
+  time [`install_server.py`](images/runtime/install_server.py) installs the package and, in a
+  networked testbed, [mcp-proxy](https://github.com/sparfenyuk/mcp-proxy) serves it over Streamable
+  HTTP at `http://<id>:8080/mcp`. The server code is identical locally and networked; only the
+  transport changes.
+- **Your own server** — [`docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md`](docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md)
+  walks through [`servers/sample-db/`](servers/sample-db), a read-only company database (synthetic
+  English and Arabic records) exposed over MCP with `runtime: local`.
+
+## The ethical-hacking lab
+
+[`docs/2026-10-17-0210-ethical-hacking-lab.md`](docs/2026-10-17-0210-ethical-hacking-lab.md) is a
+guided walkthrough of the standard MCP attack patterns against the synthetic *Najd Logistics*
+enterprise, each shown first succeeding and then **blocked by the taint-tracking guard**:
+
+| Demo | Pattern | Lesson |
+|---|---|---|
+| Poisoned tool | A tool's description tells the agent to read a secret and pass it on | Treat tool descriptions as untrusted input |
+| Rug pull | A tool behaves, then changes its instructions after a few calls | Pin and re-check tool definitions |
+| Prompt injection | A fetched web page carries instructions to the agent | Data from a tool is data, not commands |
+| Cross-lingual leak | A secret is translated before being published | Detect secrets by value, across languages |
+
+Run a demo with `mcl build/up` on `testbeds/enterprise-attacks.yaml`, then `mcl run … --tasks
+tasks/attacks.yaml` (needs an LLM API key); compare the guarded and unguarded runs with
+`mcl compare`.
+
+## Measuring
+
+```bash
+mcl run     testbeds/enterprise-network.yaml --tasks tasks/enterprise.yaml   # run the agent, detect leaks
+mcl report  runs/enterprise-network/<id>                                     # rates with 95% Wilson intervals
+mcl compare runs/A runs/B                                                    # paired comparison, exact McNemar
+```
+
+`mcl run` needs an OpenAI-compatible endpoint; set the key named by the testbed's `llm.api_key_env`.
 
 ## What `build` writes
 
 ```
 build/<testbed>/
-  docker-compose.yml     generated; do not edit
-  dockerfiles/           one per container
-  context/               runtime files copied into the images
-  data/<server>/         each server's data, with canaries planted in credentials.env
-  data.pristine/         copy restored by `mcl reset`
-  canaries.json          ground truth: every canary, its server, kind and value
-  manifest.json          source file hash, seed, mcp-cybernet-lab commit, versions requested and installed
-  smoke.json             written by `mcl smoke`
+  docker-compose.yml     generated; do not edit        data/<server>/     each server's data (canaries planted)
+  dockerfiles/           one per container              data.pristine/     copy restored by `mcl reset`
+  context/               runtime files for the images   canaries.json      ground truth: every canary
+  policy/current.json    the guard policy (if any)      manifest.json      source hash, seed, commit, versions
 ```
-
-## How a server becomes a container
-
-Most public MCP servers speak stdio only. At image build time
-[`install_server.py`](images/runtime/install_server.py) installs the package in its own folder and
-exposes it as `mcp-<id>`. In a networked testbed,
-[mcp-proxy](https://github.com/sparfenyuk/mcp-proxy) (0.13.0) serves it over Streamable HTTP at
-`http://<id>:8080/mcp`. In a local testbed the same `mcp-<id>` runs inside the client container
-over stdio. The server code is identical in both cases; only the transport changes.
 
 ## Shipped testbeds
 
 | File | What |
 |---|---|
-| `toy-local.yaml` / `toy-network.yaml` | Two servers; checks an installation |
-| `mcphunt-local.yaml` / `mcphunt-network.yaml` | Six of the eight servers of MCPHunt (arXiv 2604.27819): filesystem, git, sqlite, memory, time, fetch. The shell-command and browser servers are still to be added from MCPHunt's harness. |
+| `toy-{local,network}` | Two servers; checks an installation |
+| `mcphunt-{local,network}` | Six servers of MCPHunt (filesystem, git, sqlite, memory, time, fetch) for reproduction |
+| `sample-db-{local,network}` | The custom company-database server next to a public fetch server |
+| `enterprise-{local,network}` | The *Najd Logistics* enterprise: private data servers and public sinks |
+| `enterprise-guarded` | The enterprise with the taint-tracking gateway enabled |
+| `enterprise-attacks` | The guarded enterprise with the attacker servers of the ethical-hacking lab |
 
-The two files of each pair differ only in their topology lines, and they plant the same canaries.
-
-## Adding servers
-
-[`docs/2026-10-17-0032-mcp-server-catalogue.md`](docs/2026-10-17-0032-mcp-server-catalogue.md)
-lists the public MCP servers that work today, the public servers that can be added, and the custom
-servers planned in this repository (private data sources, sinks, translators, attacker servers).
-
-Write your own server: [`docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md`](docs/2026-10-17-0050-guide-create-a-custom-mcp-server.md)
-walks through `servers/sample-db/` (a read-only company database with synthetic English and Arabic
-records) and `runtime: local`.
+Each `local`/`network` pair differs only in its topology lines and plants the same canaries.
 
 ## Tests
 
 ```bash
-pytest -q        # schema, canaries, generated compose; no Docker needed
+pytest -q        # schema, canaries, generated compose, guard and detector; no Docker needed
 ```
+
+## Extending the framework
+
+MCP CyberNet Lab is a baseline others can build on:
+
+- **New servers** — drop a package under `servers/` and reference it with `runtime: local`.
+- **New guards** — subclass `Guard` in [`mcp_cybernet_lab/guards.py`](mcp_cybernet_lab/guards.py) and register it.
+- **New commands** — a separate package can add `mcl` subcommands through the `mcp_cybernet_lab.commands`
+  entry point, without modifying this repository.
 
 ## Roadmap
 
-| Milestone | Content |
-|---|---|
-| M0 | Schema, validation, generator ✅ |
-| M1 | Agent harness; reproduce MCPHunt's propagation rates in the local topology |
-| M2 | Networked topology ✅ (smoke level); local vs networked comparison on MCPHunt's tasks |
-| M3 | Authentication per trust domain (token, OAuth 2.1) |
-| M4 | Gateway container hosting a guard (pass-through, MCPHunt guard, Fides-style, self-evolving) |
-| M5 | Realistic backends: email, object storage, git hosting |
-| M6 | Self-evolving guard experiments in rounds |
-| M7 | Attacker servers, log poisoning, paraphrase and English↔Arabic transforms |
+| Milestone | Content | |
+|---|---|---|
+| M0 | Schema, validation, generator | ✅ |
+| M1 | LLM agent harness; reproduce MCPHunt propagation rates (local topology) | ✅ |
+| M2 | Networked topology; local-vs-networked comparison | ✅ |
+| M3 | Per-domain authentication (bearer token) | ✅ |
+| M4 | Gateway hosting a guard (pass-through, taint-tracking) | ✅ |
+| M5 | Realistic backends: webhook sink, paste site, mock web | ✅ |
+| M6 | Web interface for configuration and setup | ✅ |
+| M7 | Ethical-hacking lab: attacker servers, English↔Arabic transforms, cross-lingual detection | ✅ |
 
 ## Licence
 
-Not yet decided; to be set before public release.
+Released for **educational and research use**. A formal open-source licence will be attached before
+the first tagged release; until then, please contact the AlfaisalX center for other uses.

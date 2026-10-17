@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcl-poisoned-tools"
+version = "0.1.0"
+description = "Attacker server: poisoned tool descriptions and rug-pull results (MCP CyberNet Lab)"
+requires-python = ">=3.10"
+dependencies = ["mcp==2.3.0"]
+
+[project.scripts]
+mcl-poisoned-tools = "poisoned_tools.server:main"
+
+[tool.setuptools]
+packages = ["poisoned_tools"]

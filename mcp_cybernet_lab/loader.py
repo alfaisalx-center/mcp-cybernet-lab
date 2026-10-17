@@ -55,6 +55,8 @@ def load_testbed(path: str | Path) -> Loaded:
                 raise TestbedError(f"server '{s.id}': '{s.path}' must be a folder with a pyproject.toml")
         elif s.version is None:
             warnings.append(f"server '{s.id}': no version pinned; the build is not reproducible")
+        if s.extra_canaries and not (path.parent / s.extra_canaries).is_file():
+            raise TestbedError(f"server '{s.id}': extra_canaries '{s.extra_canaries}' not found")
         if s.data and s.data.source and not (path.parent / s.data.source).is_dir():
             raise TestbedError(f"server '{s.id}': data folder '{s.data.source}' not found next to {path.name}")
     if tb.llm.api_key_env and not os.environ.get(tb.llm.api_key_env):
@@ -63,21 +65,15 @@ def load_testbed(path: str | Path) -> Loaded:
 
 
 def check_buildable(tb: Testbed) -> None:
-    """Refuse features that the schema accepts but this version does not implement yet."""
+    """Refuse values that the schema names but this version does not implement."""
     todo = []
     for d in tb.domains:
-        if d.auth != "none":
-            todo.append(f"domain '{d.id}': auth '{d.auth}' (milestone M3)")
-    if tb.gateway.guard != "none":
-        todo.append(f"gateway.guard '{tb.gateway.guard}' (milestone M4)")
+        if d.auth == "oauth":
+            todo.append(f"domain '{d.id}': auth 'oauth' (use 'token'; OAuth 2.1 is not implemented)")
+    if tb.gateway.guard in ("mcphunt", "fides"):
+        todo.append(f"gateway.guard '{tb.gateway.guard}' (external guard; integrate its code as a guard plug-in)")
     for c in tb.clients:
-        if c.harness != "none":
-            todo.append(f"client '{c.id}': harness '{c.harness}' (milestone M1)")
-    if tb.attacks:
-        todo.append("attacks (milestone M7)")
-    if tb.transforms:
-        todo.append("transforms (milestone M7)")
-    if "ar" in tb.canaries.languages:
-        todo.append("Arabic canaries (milestone M7)")
+        if c.harness in ("mcphunt", "langgraph"):
+            todo.append(f"client '{c.id}': harness '{c.harness}' (only 'agent' and 'none' are built in)")
     if todo:
-        raise TestbedError("not implemented yet in this version:\n" + "\n".join(f"  - {t}" for t in todo))
+        raise TestbedError("not implemented in this version:\n" + "\n".join(f"  - {t}" for t in todo))

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcl-web-mock"
+version = "0.1.0"
+description = "Offline web with pages carrying injected instructions (MCP CyberNet Lab)"
+requires-python = ">=3.10"
+dependencies = ["mcp==2.3.0"]
+
+[project.scripts]
+mcl-web-mock = "web_mock.server:main"
+
+[tool.setuptools]
+packages = ["web_mock"]

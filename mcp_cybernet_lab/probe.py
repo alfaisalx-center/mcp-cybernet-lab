@@ -5,6 +5,8 @@ Standard library only, because it runs inside the client containers.
 
     probe.py stdio <command> [args...]
     probe.py http  <url>             # Streamable HTTP endpoint, e.g. http://fs:8080/mcp
+    probe.py all                     # every server in $MCL_SERVERS (as the agent sees them:
+                                     # through the gateway and with tokens when configured)
 
 Prints one JSON line: {"ok", "transport", "server", "version", "protocol", "tools", "ms"}.
 """
@@ -119,7 +121,35 @@ def probe_http(url: str) -> dict:
     return summary("http", init, tools, t0)
 
 
+def probe_all() -> int:
+    """One JSON line per server of this client, using the agent's own client code."""
+    import os
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from mcpclient import open_session
+
+    failed = 0
+    for sid, spec in json.loads(os.environ["MCL_SERVERS"]).items():
+        t0 = time.monotonic()
+        try:
+            s = open_session(spec, timeout=TIMEOUT_S)
+            init = s.initialize()
+            tools = s.list_tools()
+            s.close()
+            out = {"ok": True, "transport": spec["transport"],
+                   "server": init.get("serverInfo", {}).get("name"),
+                   "version": init.get("serverInfo", {}).get("version"),
+                   "protocol": init.get("protocolVersion"), "tools": sorted(t["name"] for t in tools),
+                   "ms": round((time.monotonic() - t0) * 1000)}
+        except Exception as e:
+            out = {"ok": False, "transport": spec["transport"], "error": f"{type(e).__name__}: {e}"}
+            failed += 1
+        print(json.dumps({"id": sid, **out}), flush=True)
+    return 1 if failed else 0
+
+
 def main(argv: list[str]) -> int:
+    if argv[:1] == ["all"]:
+        return probe_all()
     if len(argv) < 2 or argv[0] not in ("stdio", "http"):
         print(__doc__, file=sys.stderr)
         return 2

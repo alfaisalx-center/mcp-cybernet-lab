@@ -107,12 +107,14 @@ def test_compose_topology(tmp_path):
 
 def test_unimplemented_features_are_refused(tmp_path):
     data = yaml.safe_load(yaml.safe_dump(TOY))
-    data["gateway"] = {"guard": "evolving"}
+    data["servers"][2]["transport"] = "http"
+    data["servers"][2]["domain"] = "corp"
+    data["gateway"] = {"guard": "fides"}
     data["domains"][0]["auth"] = "oauth"
     loaded = load_testbed(write(tmp_path, data))
-    with pytest.raises(TestbedError, match="M4") as e:
+    with pytest.raises(TestbedError, match="fides") as e:
         build(loaded, tmp_path / "out")
-    assert "M3" in str(e.value)
+    assert "oauth" in str(e.value)
 
 
 def test_local_server_is_copied_and_installed(tmp_path):

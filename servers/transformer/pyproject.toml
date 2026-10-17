@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcl-transformer"
+version = "0.1.0"
+description = "Paraphrase and translation tools backed by the testbed LLM (MCP CyberNet Lab)"
+requires-python = ">=3.10"
+dependencies = ["mcp==2.3.0"]
+
+[project.scripts]
+mcl-transformer = "transformer.server:main"
+
+[tool.setuptools]
+packages = ["transformer"]

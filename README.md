@@ -31,6 +31,19 @@ data** (every secret is format-authentic but fake) in containers with no route t
 authorised to test. It is not a tool for attacking real systems, and the demonstrations are paired
 with the defence that stops them. See [`docs/2026-10-17-0210-ethical-hacking-lab.md`](docs/2026-10-17-0210-ethical-hacking-lab.md).
 
+## Video tutorials
+
+A five-part walkthrough that takes you from cloning the repo to running a measured attack. Each video
+is a code walkthrough in the editor with narration; everything shown runs locally on synthetic data.
+
+| # | Tutorial | Length | Link |
+|---|----------|--------|------|
+| 1 | Repository tour — the code structure | 6:06 | https://youtu.be/7HTqaim1pbs |
+| 2 | MCP servers — how each tool is built | 5:32 | https://youtu.be/4dkOCMQm_Ls |
+| 3 | Testbeds & Docker networks — one file, a whole network | 5:03 | https://youtu.be/REZ5Zpp7RrI |
+| 4 | The React web interface | 4:07 | https://youtu.be/cWCB4VS6xLc |
+| 5 | Security testbed — run an attack, measure the defence | 4:56 | https://youtu.be/1fYDa6LylcE |
+
 ## Quick start
 
 Requirements: Python ≥ 3.10 and Docker with Compose v2. For the web UI, Node ≥ 18.

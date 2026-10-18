@@ -215,5 +215,6 @@ MCP CyberNet Lab is a baseline others can build on:
 
 ## Licence
 
-Released for **educational and research use**. A formal open-source licence will be attached before
-the first tagged release; until then, please contact the AlfaisalX center for other uses.
+Licensed under the **PolyForm Noncommercial License 1.0.0** — see [`LICENSE.md`](LICENSE.md).
+The software is free to use, modify, and share for **noncommercial purposes only**, which includes **academic research and education** (universities, public research organisations, and the like).
+**Commercial use is not permitted** under this licence. For commercial licensing, please contact AlfaisalX, Alfaisal University.

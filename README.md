@@ -3,6 +3,8 @@
 **A containerised testbed and benchmark for Model Context Protocol (MCP) security — built from one YAML file.**
 AlfaisalX, Center of Excellence for Cognitive Robotics and Autonomous Agents, Alfaisal University.
 
+![MCP CyberNet Lab — visual overview: one YAML file becomes isolated Docker networks, with a taint-guard gateway that blocks private-to-public leaks](docs/media/mcp-cybernet-lab-overview.png)
+
 MCP CyberNet Lab lets you stand up a realistic network of MCP servers and an LLM agent on your own
 machine, run attacks against them in a contained environment, and measure what leaks. It is meant
 as a **teaching tool** and as a **baseline framework and benchmark** that other researchers can build
